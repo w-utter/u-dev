@@ -1,0 +1,11 @@
+[package]
+name = "u-dev"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+udev = "0.9.3"
+const_format = "0.2"
+neli = "0.7"
+libc = "0.2"
+atoi_simd = "0.16"
