@@ -8,6 +8,7 @@ mod ctx;
 pub use ctx::Udev;
 pub mod device;
 pub use device::dev::Device;
+pub use device::hotplug;
 pub use device::{DevKind, Watch};
 mod ctrl;
 mod ebpf;

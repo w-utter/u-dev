@@ -1309,15 +1309,13 @@ pub(crate) mod dev {
         }
     }
 
-    enum CowIter<'a, T: Iterator<Item = &'a OsStr>, U: Iterator<Item = &'a OsStr>> {
+    pub(crate) enum CowIter<I, T: Iterator<Item = I>, U: Iterator<Item = I>> {
         Borrowed(T),
         Owned(U),
     }
 
-    impl<'a, T: Iterator<Item = &'a OsStr>, U: Iterator<Item = &'a OsStr>> Iterator
-        for CowIter<'a, T, U>
-    {
-        type Item = &'a OsStr;
+    impl<I, T: Iterator<Item = I>, U: Iterator<Item = I>> Iterator for CowIter<I, T, U> {
+        type Item = I;
         fn next(&mut self) -> Option<Self::Item> {
             match self {
                 Self::Borrowed(b) => b.next(),
@@ -1555,6 +1553,294 @@ pub(crate) mod dev {
     }
 
     use std::{fs, io};
+}
+
+pub mod hotplug {
+
+    type OwnedDevice =
+        crate::Device<crate::device::instance::Owned, crate::device::origin::Hotplug>;
+    type BorrowedDevice<'a> =
+        crate::Device<crate::device::instance::Borrowed<'a>, crate::device::origin::Hotplug>;
+
+    pub enum Device<'a> {
+        Owned(OwnedDevice),
+        Borrowed(BorrowedDevice<'a>),
+    }
+
+    impl From<OwnedDevice> for Device<'_> {
+        fn from(o: OwnedDevice) -> Self {
+            Self::Owned(o)
+        }
+    }
+
+    impl<'a> From<BorrowedDevice<'a>> for Device<'a> {
+        fn from(b: BorrowedDevice<'a>) -> Self {
+            Self::Borrowed(b)
+        }
+    }
+
+    use crate::Udev;
+    use std::collections::BTreeMap;
+    use std::ffi::{OsStr, OsString};
+    use std::io;
+    use std::path;
+
+    impl Device<'_> {
+        pub fn devpath(&self, ctx: &Udev) -> &path::Path {
+            match self {
+                Self::Borrowed(b) => b.devpath(ctx),
+                Self::Owned(o) => o.devpath(ctx),
+            }
+        }
+
+        pub fn subsystem(&mut self, ctx: &Udev) -> io::Result<&OsStr> {
+            match self {
+                Self::Borrowed(b) => b.subsystem(ctx),
+                Self::Owned(o) => o.subsystem(ctx),
+            }
+        }
+
+        pub fn sysname(&mut self, ctx: &Udev) -> &OsStr {
+            match self {
+                Self::Borrowed(b) => b.sysname(ctx),
+                Self::Owned(o) => o.sysname(ctx),
+            }
+        }
+
+        /// reads the uevent file line by line, seperating key=value pairs
+        pub fn uevent_entries(
+            &mut self,
+            f: impl FnMut(&OsStr, &OsStr) -> io::Result<()>,
+        ) -> io::Result<()> {
+            match self {
+                Self::Borrowed(b) => b.uevent_entries(f),
+                Self::Owned(o) => o.uevent_entries(f),
+            }
+        }
+
+        pub fn id_filename(&mut self, ctx: &Udev) -> io::Result<&OsStr> {
+            match self {
+                Self::Borrowed(b) => b.id_filename(ctx),
+                Self::Owned(o) => o.id_filename(ctx),
+            }
+        }
+
+        pub fn syspath(&self) -> &path::Path {
+            match self {
+                Self::Borrowed(b) => b.syspath(),
+                Self::Owned(o) => o.syspath(),
+            }
+        }
+
+        pub fn sysattrs(&mut self) -> io::Result<&BTreeMap<OsString, OsString>> {
+            match self {
+                Self::Borrowed(b) => b.sysattrs(),
+                Self::Owned(o) => o.sysattrs(),
+            }
+        }
+
+        pub fn sysattr(&mut self, attr: &OsStr) -> io::Result<Option<&OsStr>> {
+            match self {
+                Self::Borrowed(b) => b.sysattr(attr),
+                Self::Owned(o) => o.sysattr(attr),
+            }
+        }
+
+        pub fn sysnum(&mut self) -> Option<u32> {
+            match self {
+                Self::Borrowed(b) => b.sysnum(),
+                Self::Owned(o) => o.sysnum(),
+            }
+        }
+
+        pub fn if_index(&mut self) -> io::Result<Option<u64>> {
+            match self {
+                Self::Borrowed(b) => b.if_index(),
+                Self::Owned(o) => o.if_index(),
+            }
+        }
+
+        pub fn devnum(&mut self) -> io::Result<Option<u64>> {
+            match self {
+                Self::Borrowed(b) => b.devnum(),
+                Self::Owned(o) => o.devnum(),
+            }
+        }
+
+        pub fn devmode(&mut self) -> io::Result<Option<u32>> {
+            match self {
+                Self::Borrowed(b) => b.devmode(),
+                Self::Owned(o) => o.devmode(),
+            }
+        }
+
+        pub fn devlink_priority(&mut self, ctx: &Udev) -> io::Result<Option<i32>> {
+            match self {
+                Self::Borrowed(b) => b.devlink_priority(ctx),
+                Self::Owned(o) => o.devlink_priority(ctx),
+            }
+        }
+
+        pub fn usec_initalized(&mut self, ctx: &Udev) -> io::Result<Option<u64>> {
+            match self {
+                Self::Borrowed(b) => b.usec_initalized(ctx),
+                Self::Owned(o) => o.usec_initalized(ctx),
+            }
+        }
+
+        pub fn seqnum(&mut self) -> io::Result<Option<u64>> {
+            match self {
+                Self::Borrowed(b) => b.seqnum(),
+                Self::Owned(o) => o.seqnum(),
+            }
+        }
+
+        pub fn hw_db_version(&mut self, ctx: &Udev) -> io::Result<Option<u32>> {
+            match self {
+                Self::Borrowed(b) => b.hw_db_version(ctx),
+                Self::Owned(o) => o.hw_db_version(ctx),
+            }
+        }
+
+        pub fn properties(
+            &mut self,
+            ctx: &Udev,
+        ) -> io::Result<Option<&BTreeMap<OsString, OsString>>> {
+            match self {
+                Self::Borrowed(b) => b.properties(ctx),
+                Self::Owned(o) => o.properties(ctx),
+            }
+        }
+
+        pub fn devname(&mut self) -> io::Result<Option<&OsStr>> {
+            match self {
+                Self::Borrowed(b) => b.devname(),
+                Self::Owned(o) => o.devname(),
+            }
+        }
+
+        pub fn devnode(&mut self) -> io::Result<Option<&OsStr>> {
+            self.devname()
+        }
+
+        pub fn tags(&mut self, ctx: &Udev) -> io::Result<impl Iterator<Item = &OsStr>> {
+            use crate::device::dev::CowIter;
+
+            Ok(match self {
+                Self::Borrowed(b) => CowIter::Borrowed(b.tags(ctx)?),
+                Self::Owned(o) => CowIter::Owned(o.tags(ctx)?),
+            })
+        }
+
+        pub fn driver(&mut self) -> io::Result<Option<&OsStr>> {
+            match self {
+                Self::Borrowed(b) => b.driver(),
+                Self::Owned(o) => o.driver(),
+            }
+        }
+
+        pub fn devpath_old(&mut self) -> io::Result<Option<&OsStr>> {
+            match self {
+                Self::Borrowed(b) => b.devpath_old(),
+                Self::Owned(o) => o.devpath_old(),
+            }
+        }
+        pub fn is_initalized(&mut self, ctx: &Udev) -> io::Result<bool> {
+            match self {
+                Self::Borrowed(b) => b.is_initalized(ctx),
+                Self::Owned(o) => o.is_initalized(ctx),
+            }
+        }
+        /// reads the hw db file line by line, seperating key:value pairs
+        pub fn hw_db_entries(
+            &mut self,
+            ctx: &Udev,
+            f: impl FnMut(&OsStr, &OsStr) -> io::Result<()>,
+        ) -> io::Result<()> {
+            match self {
+                Self::Borrowed(b) => b.hw_db_entries(ctx, f),
+                Self::Owned(o) => o.hw_db_entries(ctx, f),
+            }
+        }
+
+        pub fn devlinks(&mut self, ctx: &Udev) -> io::Result<impl Iterator<Item = &OsStr>> {
+            use crate::device::dev::CowIter;
+            Ok(match self {
+                Self::Borrowed(b) => CowIter::Borrowed(b.devlinks(ctx)?),
+                Self::Owned(o) => CowIter::Owned(o.devlinks(ctx)?),
+            })
+        }
+
+        pub fn parent(
+            &mut self,
+        ) -> Option<&crate::Device<crate::device::instance::Owned, crate::device::origin::Enumerate>>
+        {
+            match self {
+                Self::Borrowed(b) => b.parent(),
+                Self::Owned(o) => o.parent(),
+            }
+        }
+
+        pub fn watch(&mut self, ctx: &Udev) -> io::Result<Option<&crate::Watch>> {
+            match self {
+                Self::Borrowed(b) => b.watch(ctx),
+                Self::Owned(o) => o.watch(ctx),
+            }
+        }
+
+        pub fn devlink_paths(
+            &mut self,
+            ctx: &Udev,
+        ) -> io::Result<impl Iterator<Item = path::PathBuf>> {
+            use crate::device::dev::CowIter;
+
+            Ok(match self {
+                Self::Borrowed(b) => CowIter::Borrowed(b.devlink_paths(ctx)?),
+                Self::Owned(o) => CowIter::Owned(o.devlink_paths(ctx)?),
+            })
+        }
+
+        pub fn linked_devices(
+            &mut self,
+            ctx: &Udev,
+        ) -> io::Result<
+            impl Iterator<
+                Item = io::Result<
+                    crate::Device<crate::device::instance::Owned, crate::device::origin::Enumerate>,
+                >,
+            >,
+        > {
+            use crate::device::dev::CowIter;
+
+            Ok(match self {
+                Self::Borrowed(b) => CowIter::Borrowed(b.linked_devices(ctx)?),
+                Self::Owned(o) => CowIter::Owned(o.linked_devices(ctx)?),
+            })
+        }
+        pub fn action(
+            &self,
+        ) -> Option<crate::netlink_msg::Action<crate::netlink_msg::action::Borrowed<'_>>> {
+            match self {
+                Self::Borrowed(b) => b.action(),
+                Self::Owned(o) => o.action(),
+            }
+        }
+    }
+
+    /*
+
+    impl<D: DevImpl> Device<D, Hotplug>
+    where
+        Hotplug: Extra<D>,
+    {
+        pub fn action(&self) -> <Hotplug as Extra<D>>::Borrowed<'_> {
+            Hotplug::as_ref(&self.extra)
+        }
+    }
+
+
+
+    */
 }
 
 pub(crate) enum DeviceKind {
