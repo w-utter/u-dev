@@ -1567,6 +1567,17 @@ pub mod hotplug {
         Borrowed(BorrowedDevice<'a>),
     }
 
+    use core::fmt;
+
+    impl fmt::Debug for Device<'_> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            match self {
+                Self::Owned(o) => o.fmt(f),
+                Self::Borrowed(b) => b.fmt(f),
+            }
+        }
+    }
+
     impl From<OwnedDevice> for Device<'_> {
         fn from(o: OwnedDevice) -> Self {
             Self::Owned(o)
