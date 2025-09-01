@@ -1555,6 +1555,8 @@ pub(crate) mod dev {
     use std::{fs, io};
 }
 
+pub use dev::{DevImpl, Extra};
+
 pub mod hotplug {
 
     type OwnedDevice =
@@ -1837,21 +1839,6 @@ pub mod hotplug {
             }
         }
     }
-
-    /*
-
-    impl<D: DevImpl> Device<D, Hotplug>
-    where
-        Hotplug: Extra<D>,
-    {
-        pub fn action(&self) -> <Hotplug as Extra<D>>::Borrowed<'_> {
-            Hotplug::as_ref(&self.extra)
-        }
-    }
-
-
-
-    */
 }
 
 pub(crate) enum DeviceKind {
