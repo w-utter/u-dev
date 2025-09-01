@@ -2,7 +2,7 @@ mod filters;
 pub(crate) use filters::{Filter, UniqueFilter};
 mod socket;
 pub use socket::{EventSource, Monitor, socket_state};
-mod netlink_msg;
+pub mod netlink_msg;
 pub use netlink_msg::UdevMsg;
 mod ctx;
 pub use ctx::Udev;
